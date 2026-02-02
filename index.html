@@ -3,87 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sanctuary v3.3</title>
+    <title>Sanctuary v4.3</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap');
+
         :root { 
-            --bg: #0a0a0c; --card: #16161a; --primary: #3b82f6; 
-            --me: #2563eb; --friend: #27272a; --text: #f4f4f5; --muted: #71717a;
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        /* FIX: Gunakan overflow: hidden pada html/body agar tidak scroll liar */
-        html, body { 
-            height: 100%; margin: 0; background: var(--bg); 
-            color: var(--text); font-family: 'Inter', sans-serif; 
-            overflow: hidden; width: 100%; position: fixed;
+            --bg: #050507; 
+            --card: rgba(22, 22, 26, 0.6); 
+            --primary: #3b82f6; 
+            --me: linear-gradient(135deg, #2563eb, #1d4ed8);
+            --friend: #1e1e22; 
+            --text: #f4f4f5; 
+            --muted: #71717a;
+            --admin: #fbbf24;
+            --glass: rgba(255, 255, 255, 0.03);
         }
 
-        /* Container utama yang tingginya akan kita atur via JS */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        html, body { 
+            height: 100dvh; margin: 0; background: var(--bg); 
+            color: var(--text); font-family: 'Inter', sans-serif; 
+            overflow: hidden; width: 100%; position: fixed;
+            overscroll-behavior: none;
+        }
+
         .app-container { 
             display: flex; flex-direction: column; 
             width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            background: transparent;
+        }
+
+        header { 
+            padding: 15px; background: rgba(5, 5, 7, 0.8); 
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08); 
+            text-align: center; font-size: 11px; 
+            color: var(--primary); letter-spacing: 3px; font-weight: 800; 
+            flex-shrink: 0; position: relative; min-height: 60px;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10;
         }
         
-        #login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; }
-        
-        header { padding: 15px; background: rgba(10,10,12,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #222; text-align: center; font-size: 11px; color: var(--primary); letter-spacing: 3px; font-weight: 800; flex-shrink: 0; }
+                /* Pastikan gambar di dalam bubble tidak meluber */
+        .bubble img { 
+            max-width: 100%; 
+            height: auto; 
+            border-radius: 12px; 
+            margin-top: 8px; 
+            display: block; 
+            object-fit: cover;
+            /* Batasi tinggi maksimal agar tidak memakan seluruh layar */
+            max-height: 250px; 
+        }
 
-        /* Area Chat: Harus fleksibel dan bisa scroll */
+        /* Tambahan: Pastikan bubble me/friend menyesuaikan lebar gambar */
+        .bubble {
+            /* ... kode lainnya ... */
+            min-width: 50px;
+        }
+
+
+
         #chat-flow { 
             flex: 1; overflow-y: auto; padding: 20px; display: flex; 
-            flex-direction: column; gap: 12px; scroll-behavior: smooth;
+            flex-direction: column; gap: 14px; scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
+            background: rgba(5, 5, 7, 0.3);
         }
         
-        .bubble { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 15px; line-height: 1.5; animation: slideUp 0.3s ease; word-wrap: break-word; position: relative; }
+        #login-overlay { 
+            position: fixed; inset: 0; background: var(--bg); z-index: 100; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            padding: 30px; text-align: center;
+        }
+
+        #login-box h1 {
+            font-weight: 900; letter-spacing: 8px; margin-bottom: 5px;
+            background: linear-gradient(to bottom, #fff, #444);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .input-wrapper { position: relative; width: 220px; margin: 0 auto 20px auto; }
+
+        #roomKey {
+            width: 100%; background: var(--card); border: 1px solid #333; color: #fff;
+            padding: 18px; border-radius: 16px; text-align: center; outline: none;
+            font-size: 24px; letter-spacing: 8px; transition: 0.3s;
+        }
+
+        .toggle-password {
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: var(--muted); cursor: pointer;
+        }
+
+        .bubble { 
+            max-width: 85%; padding: 12px 18px; border-radius: 22px; font-size: 15px; 
+            line-height: 1.5; animation: slideUp 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); 
+            word-wrap: break-word; position: relative;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .is-blurred { filter: blur(25px) grayscale(1) !important; opacity: 0.4; }
         .bubble.friend { background: var(--friend); align-self: flex-start; border-bottom-left-radius: 4px; }
-        .bubble.me { background: var(--me); align-self: flex-end; border-bottom-right-radius: 4px; }
-        .bubble img { max-width: 100%; border-radius: 12px; margin-top: 5px; display: block; border: 1px solid #333; }
-        .time { font-size: 9px; color: rgba(255,255,255,0.4); margin-top: 4px; display: block; text-align: right; }
-        
-        #typing-notif { font-size: 10px; color: var(--muted); padding: 5px 20px; height: 20px; font-style: italic; flex-shrink: 0; }
+        .bubble.me { background: var(--me); align-self: flex-end; border-bottom-right-radius: 4px; color: white; }
+        .time { font-size: 9px; opacity: 0.5; margin-top: 6px; display: block; text-align: right; }
+        #typing-notif { font-size: 10px; color: var(--muted); padding: 5px 25px; height: 25px; font-style: italic; }
 
-        .bottom-bar { background: var(--card); padding: 10px 15px; display: flex; gap: 12px; align-items: center; border-top: 1px solid #222; flex-shrink: 0; }
+        .bottom-bar { 
+            background: rgba(10, 10, 12, 0.98); padding: 10px 12px; display: flex; 
+            gap: 8px; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.08); 
+            flex-shrink: 0; padding-bottom: calc(10px + env(safe-area-inset-bottom)); width: 100%;
+        }
         
-        #msgInput { flex: 1; background: #27272a; border: none; color: #fff; padding: 12px 18px; border-radius: 25px; font-size: 16px; outline: none; }
-        
-        .camera-btn { color: var(--muted); cursor: pointer; display: flex; align-items: center; }
-        .camera-btn svg { width: 24px; height: 24px; fill: currentColor; }
-        .send-btn { background: var(--primary); border: none; color: white; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        #msgInput { 
+            flex: 1; min-width: 0; background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.1); color: #fff; 
+            padding: 12px 15px; border-radius: 25px; font-size: 15px; outline: none;
+        }
 
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .send-btn { 
+            background: var(--primary); border: none; color: white; width: 42px; height: 42px; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .dash-btn { 
+            background: var(--glass); color: white; border: 1px solid rgba(255, 255, 255, 0.1); 
+            padding: 18px; width: 260px; border-radius: 16px; margin-bottom: 12px; font-weight: 600;
+        }
+
+        #exit-btn { position: absolute; left: 15px; background: var(--glass); color: var(--muted); border: 1px solid #333; border-radius: 12px; font-size: 10px; padding: 8px 14px; }
+        #nuke-btn { position: absolute; right: 15px; background: #ef4444; color: white; border: none; border-radius: 8px; font-size: 9px; padding: 8px 12px; font-weight: bold; }
+
+        @keyframes slideUp { 
+            from { opacity: 0; transform: translateY(20px) scale(0.9); } 
+            to { opacity: 1; transform: translateY(0) scale(1); } 
+        }
     </style>
 </head>
 <body>
+    <canvas id="canvas-bg" style="position: fixed; top: 0; left: 0; z-index: -1;"></canvas>
 
-<div class="app-container" id="mainApp">
-    <div id="login-overlay">
-        <h1 style="letter-spacing: 6px; font-weight: 900;">SANCTUARY</h1>
-     <p style="font-size: 10px; color: var(--muted); margin-bottom: 20px;">v3.2 BVANDIA PROJECT</p>
-        <input type="password" id="roomKey" placeholder="Secret Code..." style="background:var(--card); border:1px solid #333; color:#fff; padding:15px; border-radius:12px; margin-bottom:15px; text-align:center; width:260px; outline:none;">
-        <button onclick="enterRoom()" style="background:var(--primary); color:white; border:none; padding:12px 40px; border-radius:30px; font-weight:bold;">ACCESS</button>
+    <div class="app-container" id="mainApp">
+        <div id="login-overlay">
+            <div id="login-box">
+                <h1>SANCTUARY</h1>
+                <p style="font-size: 10px; color: var(--muted); margin-bottom: 30px; letter-spacing: 2px;">V4.3 PRIVATE VAULT</p>
+                <div class="input-wrapper">
+                    <input type="password" id="roomKey" placeholder="••••" maxlength="4">
+                    <button type="button" class="toggle-password" onclick="togglePinView()">
+                        <svg id="eye-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                    </button>
+                </div>
+                <button onclick="enterRoom()" style="background:var(--primary); color:white; border:none; padding:14px 50px; border-radius:30px; font-weight:bold; cursor:pointer; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);">ACCESS</button>
+            </div>
+        </div>
+
+        <header id="header" onclick="clearScreen()">
+            <button id="exit-btn" onclick="event.stopPropagation(); exitRoom()">EXIT</button>
+            <span id="roomStatusText">SECURE CONNECTION</span>
+            <button id="nuke-btn" onclick="event.stopPropagation(); nukeServer()">NUKE</button>
+        </header>
+
+        <div id="chat-flow"></div>
+        <div id="typing-notif"></div>
+
+        <div class="bottom-bar">
+            <label style="color: var(--muted); cursor: pointer; padding: 5px;">
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 5 5 5 5 0 0 0-5-5zm0 2a3 3 0 1 1-3 3 3 3 0 0 1 3-3z"/></svg>
+                <input type="file" id="imgInput" accept="image/*" style="display:none;" onchange="sendImage(this)">
+            </label>
+            <input type="text" id="msgInput" placeholder="Type a message..." onfocus="setTimeout(adjustViewport, 300)" onkeypress="handleTyping(); if(event.key==='Enter') send()">
+            <button class="send-btn" onclick="send()">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
     </div>
-
-    <header id="roomStatus" onclick="clearScreen()">SECURE CONNECTION</header>
-    <div id="chat-flow"></div>
-    <div id="typing-notif"></div>
-
-    <div class="bottom-bar">
-        <label class="camera-btn">
-            <svg viewBox="0 0 24 24"><path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 5 5 5 5 0 0 0-5-5zm0 2a3 3 0 1 1-3 3 3 3 0 0 1 3-3z"/></svg>
-            <input type="file" id="imgInput" accept="image/*" style="display:none;" onchange="sendImage(this)">
-        </label>
-        <input type="text" id="msgInput" placeholder="Message..." onkeypress="handleTyping(); if(event.key==='Enter') send()">
-        <button class="send-btn" onclick="send()">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-        </button>
-    </div>
-</div>
 
 <script>
-  // KONEKSI FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyAKwvGJ83BjcbuCtBAaGDWznaMJwLxE6NU",
     authDomain: "sanctuary-yapp.firebaseapp.com",
@@ -97,30 +201,64 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   let currentRoom = null;
+  let userRole = "GUEST";
   let userId = "U-" + Math.floor(Math.random() * 9000);
 
-  // --- FIX KEYBOARD & VIEWPORT ---
+  // --- VIEWPORT & KEYBOARD FIX ---
   function adjustViewport() {
-    const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    document.getElementById('mainApp').style.height = vh + 'px';
-    scrollToBottom();
+    if (window.visualViewport) {
+        const vh = window.visualViewport.height;
+        const offset = window.visualViewport.offsetTop;
+        document.getElementById('mainApp').style.height = vh + 'px';
+        window.scrollTo(0, offset);
+        scrollToBottom();
+    }
   }
-
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', adjustViewport);
-    window.visualViewport.addEventListener('scroll', adjustViewport);
+      window.visualViewport.addEventListener('resize', adjustViewport);
+      window.visualViewport.addEventListener('scroll', adjustViewport);
   }
-  window.addEventListener('resize', adjustViewport);
-  // -------------------------------
 
+  // --- LOGIN LOGIC ---
   function enterRoom() {
-    const key = document.getElementById('roomKey').value.trim();
-    if(!key) return;
-    currentRoom = btoa(key).replace(/=/g, "");
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('roomStatus').innerText = "ROOM: " + key.toUpperCase();
-    adjustViewport();
+    const pin = document.getElementById('roomKey').value.trim();
+    const accessKeys = {
+        "8899": { role: "ADMIN" },
+        "1122": { name: "ROOM Q1", role: "GUEST" },
+        "5566": { name: "ROOM Q2", role: "GUEST" }
+    };
+    if (!accessKeys[pin]) { alert("ACCESS DENIED"); return; }
+    userRole = accessKeys[pin].role;
+    if (userRole === "ADMIN") showAdminDashboard();
+    else startChat(accessKeys[pin].name);
+  }
 
+  function showAdminDashboard() {
+      document.getElementById('login-box').innerHTML = `
+        <h2 style="color:var(--admin); letter-spacing:2px; font-size:16px; margin-bottom:20px;">ADMIN TERMINAL</h2>
+        <button class="dash-btn" onclick="startChat('ROOM Q1')">MONITOR ROOM Q1</button>
+        <button class="dash-btn" onclick="startChat('ROOM Q2')">MONITOR ROOM Q2</button>
+        <p onclick="location.reload()" style="font-size:11px; color:var(--muted); margin-top:30px; cursor:pointer;">← SHUTDOWN</p>
+      `;
+  }
+
+  function startChat(roomName) {
+    currentRoom = btoa(roomName).replace(/=/g, "");
+    document.getElementById('login-overlay').style.display = 'none';
+    const statusText = document.getElementById('roomStatusText');
+    if(userRole === "ADMIN") {
+        statusText.innerText = "⭐ ADMIN / " + roomName;
+        statusText.style.color = "var(--admin)";
+        document.getElementById('nuke-btn').style.display = "block";
+    } else {
+        statusText.innerText = roomName;
+        statusText.style.color = "var(--primary)";
+    }
+    adjustViewport();
+    connectFirebase();
+  }
+
+  function connectFirebase() {
     db.ref('rooms/' + currentRoom).on('child_added', (snap) => {
       const data = snap.val();
       if(data.uid !== userId) {
@@ -128,19 +266,23 @@
         snap.ref.remove(); 
       }
     });
-
     db.ref('typing/' + currentRoom).on('value', (snap) => {
         const val = snap.val();
-        const notif = document.getElementById('typing-notif');
-        if (val && val !== userId) notif.innerText = "Seseorang sedang mengetik...";
-        else notif.innerText = "";
+        document.getElementById('typing-notif').innerText = (val && val !== userId) ? "Someone is typing..." : "";
     });
   }
 
-  function handleTyping() {
-      db.ref('typing/' + currentRoom).set(userId);
-      clearTimeout(window.typingTimer);
-      window.typingTimer = setTimeout(() => db.ref('typing/' + currentRoom).set(null), 2000);
+  function render(content, type, time, contentType) {
+    const flow = document.getElementById('chat-flow');
+    const clock = new Date(time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const div = document.createElement('div');
+    div.className = "bubble " + type;
+    if(userRole === "ADMIN") {
+        div.onclick = function(e) { e.stopPropagation(); this.classList.toggle('is-blurred'); };
+    }
+    div.innerHTML = `${contentType === 'image' ? `<img src="${content}">` : `<div>${content}</div>`}<span class="time">${clock}</span>`;
+    flow.appendChild(div);
+    scrollToBottom();
   }
 
   function send() {
@@ -157,10 +299,8 @@
       if (input.files && input.files[0]) {
           const reader = new FileReader();
           reader.onload = (e) => {
-              const base64Img = e.target.result;
-              pushData(base64Img, 'image');
-              render(base64Img, 'me', Date.now(), 'image');
-              document.getElementById('msgInput').focus();
+              pushData(e.target.result, 'image');
+              render(e.target.result, 'me', Date.now(), 'image');
           };
           reader.readAsDataURL(input.files[0]);
       }
@@ -170,23 +310,81 @@
       db.ref('rooms/' + currentRoom).push({ uid: userId, msg: content, at: Date.now(), type: type });
   }
 
-  function render(content, type, time, contentType) {
-    const flow = document.getElementById('chat-flow');
-    const clock = new Date(time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    const div = document.createElement('div');
-    div.className = "bubble " + type;
-    div.ondblclick = function() { this.remove(); };
-    div.innerHTML = `${contentType === 'image' ? `<img src="${content}">` : `<div>${content}</div>`}<span class="time">${clock}</span>`;
-    flow.appendChild(div);
-    scrollToBottom();
+  function handleTyping() {
+      if(!currentRoom) return;
+      db.ref('typing/' + currentRoom).set(userId);
+      clearTimeout(window.typingTimer);
+      window.typingTimer = setTimeout(() => db.ref('typing/' + currentRoom).set(null), 2000);
   }
 
-  function scrollToBottom() {
-    const flow = document.getElementById('chat-flow');
-    flow.scrollTop = flow.scrollHeight;
-  }
-
+  function exitRoom() { if(confirm("Terminate session?")) location.reload(); }
+  function nukeServer() { if(confirm("WIPE ALL DATA?")) { db.ref('/').remove(); location.reload(); } }
+  function scrollToBottom() { const flow = document.getElementById('chat-flow'); flow.scrollTop = flow.scrollHeight; }
   function clearScreen() { document.getElementById('chat-flow').innerHTML = ""; }
+
+  function togglePinView() {
+    const pinInput = document.getElementById('roomKey');
+    const eyeIcon = document.getElementById('eye-icon');
+    if (pinInput.type === 'password') {
+        pinInput.type = 'text';
+        eyeIcon.style.color = 'var(--primary)';
+    } else {
+        pinInput.type = 'password';
+        eyeIcon.style.color = 'var(--muted)';
+    }
+  }
+
+  // --- BG ENGINE ---
+  const canvas = document.getElementById('canvas-bg');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let mouse = { x: null, y: null };
+
+  window.addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  window.addEventListener('pointerleave', () => { mouse.x = null; mouse.y = null; });
+
+  function initBg() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    particles = [];
+    for (let i = 0; i < 40; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.4,
+            size: Math.random() * 1.5
+        });
+    }
+  }
+
+  function drawBg() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#050507'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+        if (mouse.x !== null) {
+            let dx = p.x - mouse.x, dy = p.y - mouse.y, dist = Math.hypot(dx, dy);
+            if (dist < 100) { p.x += (dx / dist) * 5; p.y += (dy / dist) * 5; }
+        }
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.4)'; ctx.fill();
+        particles.forEach(p2 => {
+            let d = Math.hypot(p.x - p2.x, p.y - p2.y);
+            if (d < 120) {
+                ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = `rgba(59, 130, 246, ${0.12 * (1 - d/120)})`;
+                ctx.stroke();
+            }
+        });
+    });
+    requestAnimationFrame(drawBg);
+  }
+
+  window.addEventListener('resize', initBg);
+  initBg(); drawBg();
 </script>
 </body>
 </html>
